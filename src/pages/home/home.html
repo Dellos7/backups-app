@@ -5,7 +5,17 @@
 </ion-header>
 
 <ion-content padding>
-  <button ion-button block color="primary" (click)="checkToken()">Check Token</button>
+
+    <ion-item>
+      <ion-label stacked>Backups server instance URL</ion-label>
+      <ion-input [(ngModel)]="instanceURL" placeholder="http://example.server.com/backups-server"></ion-input>
+    </ion-item>
+
+    <ion-item>
+      <ion-label stacked>Command</ion-label>
+      <ion-input [(ngModel)]="command" placeholder="sudo ~/.sugarBackup.sh"></ion-input>
+    </ion-item>
+  
   <button ion-button block color="primary" (click)="backup()">Backup</button>
 
   <ion-list>

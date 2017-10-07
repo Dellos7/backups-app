@@ -14,23 +14,10 @@ import { Observable } from 'rxjs/Observable';
 export class HomePage {
 
   logs: any[] = [];
+  instanceURL: string;
+  command: string;
 
-  constructor(public navCtrl: NavController, public afAuth: AngularFireAuth, public http: Http) {
-    var self = this;
-    var uid = this.afAuth.auth.currentUser.uid;
-    var ws = new WebSocket('ws://localhost:3000/' + uid);
-    ws.onopen = function(event) {
-      console.log('CONNECTED TO WSOCKET');
-      ws.onmessage = function (event) {
-        console.log(event.data);
-        self.logs.push(
-          {
-            'log': event.data
-          }
-        );
-      };
-    };
-  }
+  constructor(public navCtrl: NavController, public afAuth: AngularFireAuth, public http: Http) {}
 
   checkToken() {
     var self = this;
@@ -55,11 +42,12 @@ export class HomePage {
 
   backup() {
     var self = this;
+    self.connectToWs();
     this.afAuth.auth.currentUser.getToken(true).then(function(idToken) {
       console.log('ID TOKEN');
       console.log(idToken);
       let uid = self.afAuth.auth.currentUser.uid;
-      self.get( 'http://localhost:3000/backup?token=' + idToken + '&uid=' + uid ).subscribe(
+      self.get( self.instanceURL + '/api/v1/shell-exec?command=' + self.command + '&token=' + idToken + '&uid=' + uid ).subscribe(
         data => {
           console.log('BACKUP');
           console.log(data);
@@ -72,6 +60,36 @@ export class HomePage {
     }).catch(function(error) {
       console.log(error);
     });
+  }
+
+  connectToWs() {//
+    var self = this;
+    var uid = this.afAuth.auth.currentUser.uid;
+    var instanceNameWs = self.getWsInstanceName( self.instanceURL );
+    if( instanceNameWs ) {
+      var ws = new WebSocket('ws:' + instanceNameWs +'?uid=' + uid);
+      ws.onopen = function(event) {
+        console.log('CONNECTED TO WSOCKET');
+        ws.onmessage = function (event) {
+          console.log(event.data);
+          self.logs.push(
+            {
+              'log': event.data
+            }
+          );
+        };
+      };
+    }
+  }
+
+  getWsInstanceName( instanceURL ) {
+    let spl = instanceURL.split( "://" );
+    if( spl && spl.length > 0 ) {
+      let instanceName = spl[1];  
+      return instanceName;
+    }
+    return "";
+    
   }
 
   get( url) {
